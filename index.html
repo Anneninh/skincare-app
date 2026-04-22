@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a0a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkinCare">
+<title>SkinCare Companion</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0718;
+    --surface: #1a1028;
+    --surface2: #231535;
+    --card: #2a1940;
+    --accent: #c084fc;
+    --accent2: #f0abfc;
+    --accent3: #e879f9;
+    --gold: #fbbf24;
+    --rose: #fb7185;
+    --mint: #6ee7b7;
+    --text: #f3e8ff;
+    --text-dim: #a78bca;
+    --border: rgba(192,132,252,0.15);
+    --glow: 0 0 30px rgba(192,132,252,0.2);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb1 { width: 300px; height: 300px; background: #c084fc; top: -100px; right: -80px; }
+  .orb2 { width: 200px; height: 200px; background: #f0abfc; bottom: 100px; left: -60px; }
+  .orb3 { width: 150px; height: 150px; background: #818cf8; top: 40%; left: 30%; }
+
+  /* Header */
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 16px 20px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(14,7,24,0.8);
+    backdrop-filter: blur(20px);
+    flex-shrink: 0;
+  }
+  .header-left h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--accent2);
+    letter-spacing: -0.5px;
+  }
+  .header-left .date {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 1px;
+  }
+  .streak-badge {
+    background: linear-gradient(135deg, var(--gold), #f97316);
+    color: #1a0a00;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    padding: 10px 16px;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    background: rgba(14,7,24,0.6);
+    backdrop-filter: blur(10px);
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab.active {
+    background: linear-gradient(135deg, rgba(192,132,252,0.3), rgba(240,171,252,0.2));
+    border-color: var(--accent);
+    color: var(--accent2);
+  }
+
+  /* Main scroll area */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    position: relative;
+    z-index: 5;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .main::-webkit-scrollbar { width: 3px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* View panels */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Session card */
+  .session-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .session-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .morning .session-icon { background: linear-gradient(135deg, #fbbf24, #f97316); }
+  .night .session-icon { background: linear-gradient(135deg, #818cf8, #c084fc); }
+  .session-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent2); }
+  .session-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .step-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .step-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(192,132,252,0.05), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .step-card:active::before { opacity: 1; }
+  .step-card.done {
+    background: rgba(110,231,183,0.08);
+    border-color: rgba(110,231,183,0.25);
+  }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .step-card.done .step-num {
+    background: rgba(110,231,183,0.2);
+    color: var(--mint);
+  }
+  .step-body { flex: 1; min-width: 0; }
+  .step-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .step-card.done .step-name { color: var(--text-dim); text-decoration: line-through; }
+  .step-product { font-size: 12px; color: var(--accent); margin-top: 2px; }
+  .step-note { font-size: 11px; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+  .step-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.2s;
+  }
+  .step-card.done .step-check {
+    background: var(--mint);
+    border-color: var(--mint);
+    color: #0a1a10;
+    font-size: 11px;
+  }
+
+  /* Active alert */
+  .active-alert {
+    background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(249,115,22,0.08));
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .active-alert .icon { font-size: 22px; }
+  .active-alert .label { font-size: 12px; font-weight: 600; color: var(--gold); }
+  .active-alert .desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Progress bar */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .progress-label span:last-child { color: var(--accent2); font-weight: 600; }
+  .progress-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0 16px;
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Day toggle */
+  .day-toggle {
+    display: flex;
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .day-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 9px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-dim);
+  }
+  .day-btn.active {
+    background: linear-gradient(135deg, rgba(192,132,252,0.3), rgba(240,171,252,0.2));
+    color: var(--accent2);
+  }
+
+  /* Camera view */
+  .camera-section { margin-bottom: 20px; }
+  .camera-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--accent2);
+    margin-bottom: 12px;
+  }
+  .area-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .area-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .area-card:active { transform: scale(0.97); }
+  .area-card.has-photo { border-color: rgba(192,132,252,0.4); }
+  .area-icon { font-size: 28px; margin-bottom: 6px; }
+  .area-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .area-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .area-preview {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    display: none;
+  }
+  .area-card.has-photo .area-preview { display: block; }
+  .area-card.has-photo .area-icon { display: none; }
+  .photo-date { font-size: 9px; color: var(--accent); margin-top: 2px; }
+  input[type="file"] { display: none; }
+
+  /* History / log */
+  .log-entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .log-date { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .log-body { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .log-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .log-tag.am { background: rgba(251,191,36,0.15); color: var(--gold); }
+  .log-tag.pm { background: rgba(192,132,252,0.15); color: var(--accent); }
+  .log-tag.bha { background: rgba(129,140,248,0.15); color: #818cf8; }
+  .log-tag.az { background: rgba(251,146,60,0.15); color: #fb923c; }
+
+  /* Suggestions */
+  .suggestion-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .suggestion-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .suggestion-card p { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .phase-now { background: rgba(110,231,183,0.15); color: var(--mint); }
+  .phase-next { background: rgba(192,132,252,0.15); color: var(--accent); }
+  .phase-future { background: rgba(251,191,36,0.12); color: var(--gold); }
+  .timeline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .timeline-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+  .timeline-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 12px;
+  }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .tl-line { width: 2px; flex: 1; min-height: 20px; margin-top: 2px; }
+  .timeline-content .week { font-size: 11px; font-weight: 600; color: var(--text-dim); }
+  .timeline-content .action { font-size: 12px; color: var(--text); margin-top: 2px; }
+  .timeline-content .goal { font-size: 11px; color: var(--text-dim); margin-top: 2px; font-style: italic; }
+
+  /* Warnings */
+  .warning-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .warn-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .warn-item .w-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    border-top: 1px solid var(--border);
+    background: rgba(14,7,24,0.9);
+    backdrop-filter: blur(20px);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 3px;
+  }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 9px; color: var(--text-dim); font-weight: 500; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px rgba(192,132,252,0.6)); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: rgba(110,231,183,0.15);
+    border: 1px solid rgba(110,231,183,0.3);
+    color: var(--mint);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* SPF reminder badge */
+  .spf-reminder {
+    background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(249,115,22,0.1));
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .spf-reminder:active { opacity: 0.8; }
+  .spf-text .title { font-size: 13px; font-weight: 600; color: var(--gold); }
+  .spf-text .sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .spf-btn {
+    margin-left: auto;
+    background: rgba(251,191,36,0.2);
+    color: var(--gold);
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .empty-state .emoji { font-size: 36px; margin-bottom: 12px; }
+
+  .week-indicator {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .week-num { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--accent2); line-height: 1; }
+  .week-label { font-size: 11px; color: var(--text-dim); }
+  .week-phase { font-size: 12px; font-weight: 600; color: var(--accent); }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>✨ SkinCare</h1>
+    <div class="date" id="headerDate"></div>
+  </div>
+  <div class="streak-badge">🔥 <span id="streakCount">1</span> ngày</div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="showNav('routine')">Routine</div>
+  <div class="tab" onclick="showNav('photo')">📷 Ảnh</div>
+  <div class="tab" onclick="showNav('history')">📋 Nhật ký</div>
+  <div class="tab" onclick="showNav('plan')">📅 Kế hoạch</div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- ROUTINE VIEW -->
+  <div class="view active" id="view-routine">
+    <!-- Day selector for evening -->
+    <div class="week-indicator">
+      <div>
+        <div class="week-num" id="weekNum">1</div>
+        <div class="week-label">tuần điều trị</div>
+      </div>
+      <div style="flex:1; padding-left: 8px;">
+        <div class="week-phase" id="weekPhase">Tuần 1–2: Làm quen với active</div>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:2px;" id="weekDetail">BHA + Azelaic xen kẽ</div>
+      </div>
+    </div>
+
+    <!-- Morning -->
+    <div class="session-header morning">
+      <div class="session-icon">☀️</div>
+      <div>
+        <div class="session-title">Buổi Sáng</div>
+        <div class="session-sub" id="morningProgress">0/3 bước hoàn thành</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="morningBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="spf-reminder" onclick="spfRemind()">
+      <span style="font-size:22px;">🌤️</span>
+      <div class="spf-text">
+        <div class="title">Nhắc thoa lại SPF</div>
+        <div class="sub">Thoa lại mỗi 3 tiếng — nhấn để đặt nhắc</div>
+      </div>
+      <button class="spf-btn">Nhắc tôi</button>
+    </div>
+
+    <div class="steps" id="morningSteps"></div>
+
+    <div class="divider">Buổi tối</div>
+
+    <!-- Night toggle -->
+    <div class="day-toggle">
+      <div class="day-btn active" id="oddBtn" onclick="toggleNight('odd')">🌙 Tối lẻ (BHA)</div>
+      <div class="day-btn" id="evenBtn" onclick="toggleNight('even')">🌙 Tối chẵn (Azelaic)</div>
+    </div>
+
+    <div class="session-header night">
+      <div class="session-icon">🌙</div>
+      <div>
+        <div class="session-title" id="nightTitle">Tối lẻ — BHA</div>
+        <div class="session-sub" id="nightProgress">0/3 bước hoàn thành</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="nightBar" style="width:0%"></div></div>
+    </div>
+
+    <div class="active-alert" id="nightAlert">
+      <span class="icon">⚗️</span>
+      <div>
+        <div class="label" id="alertLabel">Đêm nay: BHA Obagi Clenziderm 2%</div>
+        <div class="desc" id="alertDesc">Đẩy mụn ẩn, thông lỗ chân lông, kiềm dầu</div>
+      </div>
+    </div>
+
+    <div class="steps" id="nightSteps"></div>
+
+    <button onclick="completeDay()" style="width:100%;margin-top:8px;padding:14px;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(240,171,252,0.15));border:1px solid rgba(192,132,252,0.4);border-radius:14px;color:var(--accent2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+      ✅ Lưu ngày hôm nay
+    </button>
+  </div>
+
+  <!-- PHOTO VIEW -->
+  <div class="view" id="view-photo">
+    <div class="camera-title">📷 Theo dõi tình trạng da</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;">Chụp ảnh đều đặn mỗi tuần để theo dõi sự thay đổi. Chụp dưới ánh sáng tự nhiên, không filter.</p>
+
+    <div class="section-title">Vùng cần ghi lại</div>
+    <div class="area-grid" id="areaGrid"></div>
+
+    <div style="margin-top:20px;">
+      <div class="section-title">Ghi chú tình trạng hôm nay</div>
+      <textarea id="skinNote" placeholder="Mô tả tình trạng da hôm nay: mụn mới, texture, độ dầu, phản ứng với sản phẩm..." style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;resize:none;height:100px;line-height:1.5;outline:none;"></textarea>
+      <button onclick="saveNote()" style="width:100%;margin-top:8px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--accent2);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">💾 Lưu ghi chú</button>
+    </div>
+  </div>
+
+  <!-- HISTORY VIEW -->
+  <div class="view" id="view-history">
+    <div class="camera-title">📋 Nhật ký Skincare</div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- PLAN VIEW -->
+  <div class="view" id="view-plan">
+    <div class="camera-title">📅 Kế hoạch điều trị</div>
+
+    <div style="margin-bottom:20px;">
+      <div class="suggestion-card">
+        <div class="phase-badge phase-now">● Giai đoạn hiện tại</div>
+        <h3>Tuần 1–2: Làm quen với active</h3>
+        <p>BHA Obagi 2% tối lẻ + Azelaic Acid 20% tối chẵn. Da làm quen với 2 active, bắt đầu đẩy mụn ẩn. Có thể có purging — bình thường.</p>
+      </div>
+
+      <div class="suggestion-card">
+        <div class="phase-badge phase-next">→ Giai đoạn tới</div>
+        <h3>Tuần 3–4: Thêm Retinoid</h3>
+        <p>Thay Azelaic bằng Adapalene (Kenzit) toàn mặt xen kẽ BHA. Retinoid tái cấu trúc texture, đẩy mạnh cải thiện mụn ẩn. Bắt đầu chậm 1–2x/tuần.</p>
+      </div>
+
+      <div class="suggestion-card">
+        <div class="phase-badge phase-future">◆ Tháng 2</div>
+        <h3>Tăng cường + Spa</h3>
+        <p>Tăng BHA lên mỗi tối. Peel tại spa mỗi tháng. Lấy mụn tại cơ sở uy tín 3–4 tuần/lần. Dừng active 3–5 ngày trước khi đi peel.</p>
+      </div>
+
+      <div class="suggestion-card">
+        <div class="phase-badge phase-future">◆ 3–6 tháng</div>
+        <h3>Đánh giá tổng thể</h3>
+        <p>Đánh giá lại toàn bộ tình trạng. Nếu mụn ẩn không cải thiện đủ, cân nhắc gặp bác sĩ da liễu để được kê đơn thuốc mạnh hơn.</p>
+      </div>
+    </div>
+
+    <div class="section-title">⚠️ Lưu ý quan trọng</div>
+    <div class="suggestion-card">
+      <div class="warning-list">
+        <div class="warn-item"><span class="w-icon">☀️</span><span>Luôn dùng SPF ban ngày — bắt buộc khi dùng BHA và Azelaic</span></div>
+        <div class="warn-item"><span class="w-icon">💧</span><span>Không bỏ dưỡng ẩm dù da dầu — thiếu ẩm khiến da tiết dầu bù nhiều hơn</span></div>
+        <div class="warn-item"><span class="w-icon">🚫</span><span>Không nặn mụn tự ý — chỉ lấy mụn tại cơ sở uy tín có dụng cụ vô trùng</span></div>
+        <div class="warn-item"><span class="w-icon">⏸️</span><span>Tạm dừng tất cả active 3–5 ngày trước khi đi peel tại spa</span></div>
+        <div class="warn-item"><span class="w-icon">❌</span><span>Không dùng BHA và Adapalene cùng một tối</span></div>
+        <div class="warn-item"><span class="w-icon">🔴</span><span>Dừng và theo dõi nếu da đỏ rát, ngứa, hoặc mụn nổi ồ ạt vùng mới</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchNav(0)">
+    <div class="nav-icon">🌿</div>
+    <div class="nav-label">Routine</div>
+  </div>
+  <div class="nav-item" onclick="switchNav(1)">
+    <div class="nav-icon">📷</div>
+    <div class="nav-label">Ảnh</div>
+  </div>
+  <div class="nav-item" onclick="switchNav(2)">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">Nhật ký</div>
+  </div>
+  <div class="nav-item" onclick="switchNav(3)">
+    <div class="nav-icon">📅</div>
+    <div class="nav-label">Kế hoạch</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- DATA ----
+const START_DATE = new Date('2026-04-15');
+
+const MORNING_STEPS = [
+  { name: 'Rửa mặt', product: 'Sữa rửa mặt dịu nhẹ (da mụn)', note: 'Rửa nhẹ tay, không chà xát mạnh' },
+  { name: 'Serum', product: 'Skin1004 Centella Serum', note: 'Làm dịu & phục hồi da' },
+  { name: 'Chống nắng', product: 'SPF (bắt buộc)', note: '☀️ Thoa lại mỗi 3 tiếng trong ngày!' },
+];
+
+const NIGHT_ODD = [
+  { name: 'Rửa mặt', product: 'Sữa rửa mặt dịu nhẹ', note: 'Làm sạch nhẹ trước khi dùng active' },
+  { name: 'BHA Obagi Clenziderm 2%', product: 'Salicylic Acid 2%', note: 'Chờ 15–20 phút sau rửa mặt. Thấy mát nhẹ là bình thường.' },
+  { name: 'Chấm mụn (nếu có)', product: 'Kenzit (Clindamycin/Adapalene)', note: '⚡ Chỉ dùng khi có mụn đầu trắng — chấm điểm, không thoa rộng' },
+  { name: 'Dưỡng ẩm', product: 'Skin1004 Centella + Purito Panthenol Cream', note: 'Luôn dưỡng ẩm sau active để bảo vệ hàng rào da' },
+];
+
+const NIGHT_EVEN = [
+  { name: 'Rửa mặt', product: 'Sữa rửa mặt dịu nhẹ', note: 'Làm sạch nhẹ trước khi dùng active' },
+  { name: 'Azelaic Acid 20% (Ezanic)', product: 'Azelaic Acid 20%', note: 'Trị thâm đỏ + hỗ trợ mụn ẩn. Có thể cảm giác ấm nhẹ — bình thường.' },
+  { name: 'Chấm mụn (nếu có)', product: 'Kenzit (Clindamycin/Adapalene)', note: '⚡ Chỉ dùng khi có mụn đầu trắng — chấm điểm, không thoa rộng' },
+  { name: 'Dưỡng ẩm', product: 'Skin1004 Centella + Purito Panthenol Cream', note: 'Luôn dưỡng ẩm sau active để bảo vệ hàng rào da' },
+];
+
+const SKIN_AREAS = [
+  { id: 'fullface', icon: '🧑', name: 'Toàn khuôn mặt', sub: 'Góc chụp thẳng' },
+  { id: 'leftcheek', icon: '◀️', name: 'Má trái', sub: 'Vùng xương gò má' },
+  { id: 'rightcheek', icon: '▶️', name: 'Má phải', sub: 'Vùng xương gò má' },
+  { id: 'tzone', icon: '↕️', name: 'Vùng T', sub: 'Trán + mũi + cằm' },
+];
+
+// ---- STATE ----
+let state = JSON.parse(localStorage.getItem('skincare_state') || 'null') || {
+  streak: 1,
+  morningDone: [],
+  nightMode: 'odd',
+  nightDone: [],
+  photos: {},
+  history: [],
+  lastSaved: null,
+};
+
+let currentView = 'routine';
+let navViews = ['routine', 'photo', 'history', 'plan'];
+
+// ---- INIT ----
+function init() {
+  updateDate();
+  calcWeek();
+  renderMorning();
+  renderNight();
+  renderAreas();
+  renderHistory();
+  document.getElementById('streakCount').textContent = state.streak;
+}
+
+function updateDate() {
+  const now = new Date();
+  const days = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+  document.getElementById('headerDate').textContent =
+    `${days[now.getDay()]}, ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+}
+
+function calcWeek() {
+  const now = new Date();
+  const diff = Math.floor((now - START_DATE) / (1000*60*60*24));
+  const week = Math.floor(diff / 7) + 1;
+  document.getElementById('weekNum').textContent = week;
+
+  if (week <= 2) {
+    document.getElementById('weekPhase').textContent = 'Tuần 1–2: Làm quen với active';
+    document.getElementById('weekDetail').textContent = 'BHA + Azelaic xen kẽ';
+  } else if (week <= 4) {
+    document.getElementById('weekPhase').textContent = 'Tuần 3–4: Thêm Retinoid';
+    document.getElementById('weekDetail').textContent = 'BHA + Adapalene (Kenzit) xen kẽ';
+  } else {
+    document.getElementById('weekPhase').textContent = 'Tháng 2+: Tăng cường';
+    document.getElementById('weekDetail').textContent = 'BHA hàng đêm + peel spa';
+  }
+}
+
+// ---- MORNING ----
+function renderMorning() {
+  const container = document.getElementById('morningSteps');
+  container.innerHTML = '';
+  MORNING_STEPS.forEach((s, i) => {
+    const done = state.morningDone.includes(i);
+    const el = document.createElement('div');
+    el.className = 'step-card' + (done ? ' done' : '');
+    el.onclick = () => toggleMorning(i);
+    el.innerHTML = `
+      <div class="step-num">${done ? '✓' : i+1}</div>
+      <div class="step-body">
+        <div class="step-name">${s.name}</div>
+        <div class="step-product">${s.product}</div>
+        <div class="step-note">${s.note}</div>
+      </div>
+      <div class="step-check">${done ? '✓' : ''}</div>
+    `;
+    container.appendChild(el);
+  });
+  updateMorningProgress();
+}
+
+function toggleMorning(i) {
+  const idx = state.morningDone.indexOf(i);
+  if (idx > -1) state.morningDone.splice(idx, 1);
+  else state.morningDone.push(i);
+  save();
+  renderMorning();
+}
+
+function updateMorningProgress() {
+  const done = state.morningDone.length;
+  const total = MORNING_STEPS.length;
+  document.getElementById('morningProgress').textContent = `${done}/${total} bước hoàn thành`;
+  document.getElementById('morningBar').style.width = (done/total*100) + '%';
+}
+
+// ---- NIGHT ----
+function toggleNight(mode) {
+  state.nightMode = mode;
+  document.getElementById('oddBtn').className = 'day-btn' + (mode === 'odd' ? ' active' : '');
+  document.getElementById('evenBtn').className = 'day-btn' + (mode === 'even' ? ' active' : '');
+  save();
+  renderNight();
+}
+
+function renderNight() {
+  const isOdd = state.nightMode === 'odd';
+  const steps = isOdd ? NIGHT_ODD : NIGHT_EVEN;
+  document.getElementById('nightTitle').textContent = isOdd ? 'Tối lẻ — BHA' : 'Tối chẵn — Azelaic';
+  document.getElementById('alertLabel').textContent = isOdd
+    ? 'Đêm nay: BHA Obagi Clenziderm 2%'
+    : 'Đêm nay: Azelaic Acid 20% (Ezanic)';
+  document.getElementById('alertDesc').textContent = isOdd
+    ? 'Đẩy mụn ẩn, thông lỗ chân lông, kiềm dầu'
+    : 'Trị thâm đỏ, hỗ trợ mụn ẩn nhẹ hơn BHA';
+
+  const container = document.getElementById('nightSteps');
+  container.innerHTML = '';
+  steps.forEach((s, i) => {
+    const done = state.nightDone.includes(i);
+    const el = document.createElement('div');
+    el.className = 'step-card' + (done ? ' done' : '');
+    el.onclick = () => toggleNightStep(i);
+    el.innerHTML = `
+      <div class="step-num">${done ? '✓' : i+1}</div>
+      <div class="step-body">
+        <div class="step-name">${s.name}</div>
+        <div class="step-product">${s.product}</div>
+        <div class="step-note">${s.note}</div>
+      </div>
+      <div class="step-check">${done ? '✓' : ''}</div>
+    `;
+    container.appendChild(el);
+  });
+  updateNightProgress(steps.length);
+}
+
+function toggleNightStep(i) {
+  const idx = state.nightDone.indexOf(i);
+  if (idx > -1) state.nightDone.splice(idx, 1);
+  else state.nightDone.push(i);
+  save();
+  const steps = state.nightMode === 'odd' ? NIGHT_ODD : NIGHT_EVEN;
+  updateNightProgress(steps.length);
+  renderNight();
+}
+
+function updateNightProgress(total) {
+  const done = state.nightDone.length;
+  document.getElementById('nightProgress').textContent = `${done}/${total} bước hoàn thành`;
+  document.getElementById('nightBar').style.width = Math.min(done/total*100, 100) + '%';
+}
+
+// ---- COMPLETE DAY ----
+function completeDay() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('vi-VN');
+  const note = document.getElementById('skinNote')?.value || '';
+
+  const entry = {
+    date: dateStr,
+    ts: now.toISOString(),
+    morning: state.morningDone.length,
+    morningTotal: MORNING_STEPS.length,
+    nightMode: state.nightMode,
+    nightDone: state.nightDone.length,
+    note: note,
+  };
+
+  state.history.unshift(entry);
+  if (state.history.length > 1) {
+    const last = new Date(state.history[1].ts);
+    const diffDays = Math.round((now - last) / (1000*60*60*24));
+    if (diffDays <= 2) state.streak++;
+    else state.streak = 1;
+  }
+
+  state.morningDone = [];
+  state.nightDone = [];
+  state.lastSaved = now.toISOString();
+  document.getElementById('streakCount').textContent = state.streak;
+  save();
+  renderMorning();
+  renderNight();
+  renderHistory();
+  showToast('✅ Đã lưu ngày ' + dateStr + '!');
+}
+
+// ---- PHOTO ----
+function renderAreas() {
+  const grid = document.getElementById('areaGrid');
+  grid.innerHTML = '';
+  SKIN_AREAS.forEach(area => {
+    const photo = state.photos[area.id];
+    const el = document.createElement('div');
+    el.className = 'area-card' + (photo ? ' has-photo' : '');
+    el.onclick = () => triggerPhoto(area.id);
+    el.innerHTML = `
+      ${photo ? `<img class="area-preview" src="${photo.src}" alt="${area.name}">` : `<div class="area-icon">${area.icon}</div>`}
+      <div class="area-name">${area.name}</div>
+      <div class="area-sub">${area.sub}</div>
+      ${photo ? `<div class="photo-date">📅 ${photo.date}</div>` : `<div style="font-size:10px;color:var(--accent);margin-top:4px;">+ Thêm ảnh</div>`}
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function triggerPhoto(areaId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      state.photos[areaId] = {
+        src: ev.target.result,
+        date: new Date().toLocaleDateString('vi-VN'),
+      };
+      save();
+      renderAreas();
+      showToast('📷 Đã lưu ảnh ' + SKIN_AREAS.find(a => a.id === areaId).name);
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function saveNote() {
+  const note = document.getElementById('skinNote').value;
+  if (!note.trim()) { showToast('⚠️ Hãy nhập ghi chú trước'); return; }
+  showToast('💾 Đã lưu ghi chú!');
+}
+
+// ---- HISTORY ----
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!state.history.length) {
+    list.innerHTML = `<div class="empty-state"><div class="emoji">📋</div>Chưa có nhật ký nào.<br>Hoàn thành routine đầu tiên và nhấn "Lưu ngày hôm nay"!</div>`;
+    return;
+  }
+  list.innerHTML = state.history.map(e => `
+    <div class="log-entry">
+      <div class="log-date">📅 ${e.date}</div>
+      <div class="log-body">
+        <span class="log-tag am">☀️ Sáng: ${e.morning}/${e.morningTotal}</span>
+        <span class="log-tag ${e.nightMode === 'odd' ? 'bha' : 'az'}">🌙 ${e.nightMode === 'odd' ? 'BHA' : 'Azelaic'}: ${e.nightDone}/${e.nightMode === 'odd' ? NIGHT_ODD.length : NIGHT_EVEN.length}</span>
+        ${e.note ? `<div style="margin-top:6px;color:var(--text-dim);font-size:11px;line-height:1.5;">📝 ${e.note}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ---- NAV ----
+function showNav(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', navViews[i] === view);
+  });
+}
+
+function switchNav(idx) {
+  const view = navViews[idx];
+  showNav(view);
+  document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', i === idx));
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+// ---- SPF REMIND ----
+function spfRemind() {
+  if ('Notification' in window && Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') {
+        setTimeout(() => {
+          new Notification('☀️ SkinCare Nhắc nhở', { body: 'Đã 3 tiếng! Thoa lại SPF nhé 🌤️' });
+        }, 3 * 60 * 60 * 1000);
+        showToast('⏰ Sẽ nhắc bạn sau 3 tiếng!');
+      } else {
+        showToast('📱 Đặt nhắc trong 3 tiếng nhé!');
+      }
+    });
+  } else {
+    showToast('📱 Nhớ thoa lại SPF sau 3 tiếng!');
+  }
+}
+
+// ---- UTILS ----
+function save() {
+  try { localStorage.setItem('skincare_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+init();
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
